@@ -1,0 +1,238 @@
+// file: prisma/schema.prisma
+
+// PRISMA V7 UPDATE: Hapus 'url = env("DATABASE_URL")' dari sini.
+// URL koneksi sekarang dibaca langsung dari environment variable
+// (DATABASE_URL) saat menjalankan CLI (migrate/db push) atau saat inisialisasi PrismaClient.
+
+datasource db {
+  provider = "postgresql" 
+}
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+// =========================================================
+// Models Tambahan yang Diperlukan oleh NextAuth (Wajib Ada)
+// =========================================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// =========================================================
+// MODEL USER (Anggota, Kontributor, & Donatur)
+// =========================================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  
+  // Tambahan dari Kebutuhan Proyek Kita:
+  nomorHp       String?   @unique  @map("nomor_hp") 
+  totalBooksFinished Int @default(0) @map("total_buku_ditamatkan")
+  
+  // Hubungan
+  accounts      Account[]
+  sessions      Session[]
+  reviews       Review[]
+  loans         Loan[]
+  contributedItems BookItem[] @relation("OwnerItems")
+  contributions DanaContribution[]
+
+  role          UserRole  @default(MEMBER)
+
+  @@map("users") 
+}
+enum UserRole {
+  MEMBER      // Anggota biasa / Donatur
+  CONTRIBUTOR // Bisa menambah BookItem (kontribusi fisik)
+  ADMIN       // Full access ke dashboard admin
+}
+
+
+// =========================================================
+// MODEL BOOK TITLES (Katalog Judul)
+// =========================================================
+model BookTitle {
+  id              String      @id @default(cuid())
+  title           String      @unique @map("judul")
+  author          String      @map("penulis")
+  synopsis        String?     @db.Text
+  category        String      @map("kategori")
+  coverImage      String?     @map("cover_image_url") // <-- TAMBAHKAN INI
+  avgRating       Float       @default(0.0) @map("avg_rating")
+
+  // Hubungan
+  items           BookItem[]
+  reviews         Review[]
+  
+  @@map("book_titles")
+}
+
+
+// =========================================================
+// MODEL BOOK ITEMS (Stok Fisik per Copy)
+// =========================================================
+model BookItem {
+  id              String    @id @default(cuid())
+  barcodeSN       String?   @unique @map("barcode_sn")
+  condition       String    @map("kondisi")
+  status          StatusItem @default(AVAILABLE) @map("status_item")
+  
+  // Foreign Keys
+  titleId         String    @map("fk_id_judul")
+  ownerId         String    @map("fk_id_owner")
+
+  // Hubungan
+  title           BookTitle @relation(fields: [titleId], references: [id])
+  owner           User      @relation("OwnerItems", fields: [ownerId], references: [id])
+  loans           Loan[]
+  
+  @@map("book_items")
+}
+
+enum StatusItem {
+  AVAILABLE
+  ON_LOAN
+  MAINTENANCE
+}
+
+
+// =========================================================
+// MODEL LOANS (Riwayat Peminjaman)
+// =========================================================
+model Loan {
+  id              String    @id @default(cuid())
+  borrowDate      DateTime  @default(now()) @map("tanggal_pinjam")
+  dueDate         DateTime  @map("tanggal_kembali_seharusnya")
+  returnDate      DateTime? @map("tanggal_kembali_aktual")
+  status          StatusLoan @default(REQUESTED) @map("status_loan")
+  
+  // Foreign Keys
+  userId          String    @map("fk_id_user")
+  itemId          String    @map("fk_id_item")
+
+  // Hubungan
+  user            User      @relation(fields: [userId], references: [id])
+  item            BookItem  @relation(fields: [itemId], references: [id])
+
+  @@map("loans")
+}
+
+enum StatusLoan {
+  REQUESTED
+  APPROVED
+  RETURNED
+  REJECTED
+}
+
+
+// =========================================================
+// MODEL REVIEWS (Ulasan 1 Kalimat)
+// =========================================================
+model Review {
+  id              String    @id @default(cuid())
+  text            String    @map("ulasan") @db.VarChar(255)
+  rating          Int
+  reviewDate      DateTime  @default(now()) @map("tanggal_ulasan")
+
+  // Foreign Keys
+  userId          String    @map("fk_id_user")
+  titleId         String    @map("fk_id_judul")
+
+  // Hubungan
+  user            User      @relation(fields: [userId], references: [id])
+  title           BookTitle @relation(fields: [titleId], references: [id])
+  
+  @@unique([userId, titleId])
+  @@map("reviews")
+}
+
+
+// =========================================================
+// MODEL DANA CAMPAIGNS (Target & Tujuan Galang Dana)
+// =========================================================
+model DanaCampaign {
+  id                  String     @id @default(cuid())
+  title               String     @map("judul_campaign")
+  targetAmount        Decimal    @db.Decimal(15, 2) @map("target_dana")
+  collectedAmount     Decimal    @default(0.00) @db.Decimal(15, 2) @map("dana_terkumpul")
+  description         String     @db.Text @map("deskripsi_penggunaan")
+  startDate           DateTime   @default(now()) @map("tanggal_mulai")
+  endDate             DateTime?  @map("tanggal_akhir")
+  status              StatusCampaign @default(ACTIVE) @map("status_campaign")
+
+  // Hubungan
+  contributions       DanaContribution[]
+  
+  @@map("dana_campaigns")
+}
+
+enum StatusCampaign {
+  ACTIVE
+  GOAL_MET
+  CLOSED
+}
+
+// =========================================================
+// MODEL DANA CONTRIBUTIONS (Riwayat Kontribusi Dana)
+// =========================================================
+model DanaContribution {
+  id                  String     @id @default(cuid())
+  amount              Decimal    @db.Decimal(10, 2) @map("jumlah_dana")
+  contributionDate    DateTime   @default(now()) @map("tanggal_kontribusi")
+  anonymousName       String?    @map("nama_anonim")
+  status              StatusTransaction @default(SUCCESS) @map("status_transaksi")
+
+  // Foreign Keys
+  campaignId          String     @map("fk_id_campaign")
+  userId              String?    @map("fk_id_user") 
+
+  // Hubungan
+  campaign            DanaCampaign @relation(fields: [campaignId], references: [id])
+  user                User?      @relation(fields: [userId], references: [id])
+
+  @@map("dana_contributions")
+}
+
+enum StatusTransaction {
+  SUCCESS
+  PENDING
+  FAILED
+}

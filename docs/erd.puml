@@ -1,0 +1,121 @@
+@startuml PeminjamanBukuKomunitasERD
+' Tentukan gaya/skin diagram
+skinparam titleFontSize 24
+skinparam entity {
+    backgroundColor FloralWhite
+    borderColor Black
+    arrowColor Black
+}
+
+' =========================================================================
+' 1. Entitas Utama: USER (Anggota, Kontributor, & Donatur)
+' =========================================================================
+entity User as "USERS\n(Anggota & Kontributor)" {
+    * **id_user** : integer <<PK>>
+    --
+    nama_lengkap : varchar(100)
+    email : varchar(100) <<Unique>>
+    nomor_hp : varchar(15) <<Unique>>
+    tanggal_daftar : date
+    total_buku_ditamatkan : integer
+}
+
+' =========================================================================
+' 2. Entitas Katalog: BOOK TITLES (Informasi Umum Buku)
+' =========================================================================
+entity BookTitle as "BOOK_TITLES\n(Katalog Judul)" {
+    * **id_judul** : integer <<PK>>
+    --
+    judul : varchar(255) <<Unique>>
+    penulis : varchar(100)
+    sinopsis : text
+    kategori : varchar(50)
+    avg_rating : decimal(2,1)
+}
+
+' =========================================================================
+' 3. Entitas Stok Fisik: BOOK ITEMS (Stok per Copy Fisik)
+' =========================================================================
+entity BookItem as "BOOK_ITEMS\n(Stok Fisik per Copy)" {
+    * **id_item** : integer <<PK>>
+    --
+    fk_id_judul : integer <<FK>>
+    fk_id_owner : integer <<FK>>
+    barcode_sn : varchar(50) <<Unique>>
+    kondisi : varchar(20)
+    status_item : enum ('AVAILABLE', 'ON_LOAN', 'MAINTENANCE')
+}
+
+' =========================================================================
+' 4. Entitas Transaksi: LOANS (Peminjaman)
+' =========================================================================
+entity Loan as "LOANS\n(Riwayat Peminjaman)" {
+    * **id_loan** : integer <<PK>>
+    --
+    fk_id_user : integer <<FK>>
+    fk_id_item : integer <<FK>>
+    tanggal_pinjam : date
+    tanggal_kembali_seharusnya : date
+    tanggal_kembali_aktual : date
+    status_loan : enum ('REQUESTED', 'APPROVED', 'RETURNED')
+}
+
+' =========================================================================
+' 5. Entitas Feedback: REVIEWS (Ulasan User)
+' =========================================================================
+entity Review as "REVIEWS\n(Ulasan 1 Kalimat)" {
+    * **id_review** : integer <<PK>>
+    --
+    fk_id_user : integer <<FK>>
+    fk_id_judul : integer <<FK>>
+    ulasan : varchar(255)
+    rating : integer(1..5)
+    tanggal_ulasan : date
+}
+
+' =========================================================================
+' 6. Entitas Galang Dana BARU: DANA CAMPAIGNS (Target & Tujuan)
+' =========================================================================
+entity DanaCampaign as "DANA_CAMPAIGNS\n(Program Galang Dana)" {
+    * **id_campaign** : integer <<PK>>
+    --
+    judul_campaign : varchar(255)
+    target_dana : decimal(15,2)
+    dana_terkumpul : decimal(15,2)
+    deskripsi_penggunaan : text
+    tanggal_mulai : date
+    tanggal_akhir : date
+    status_campaign : enum ('ACTIVE', 'GOAL_MET', 'CLOSED')
+}
+
+' =========================================================================
+' 7. Entitas Galang Dana BARU: DANA CONTRIBUTIONS (History Transaksi)
+' =========================================================================
+entity DanaContribution as "DANA_CONTRIBUTIONS\n(Riwayat Kontribusi Dana)" {
+    * **id_kontribusi** : integer <<PK>>
+    --
+    fk_id_campaign : integer <<FK>>
+    fk_id_user : integer <<FK>> <<Nullable>>
+    jumlah_dana : decimal(10,2)
+    tanggal_kontribusi : datetime
+    nama_anonim : varchar(100) <<Nullable>>
+    status_transaksi : enum ('SUCCESS', 'PENDING', 'FAILED')
+}
+
+' =========================================================================
+' 8. Relationship (Hubungan Antar Entitas)
+' =========================================================================
+
+' Bagian Buku & Peminjaman (Dari Desain Sebelumnya)
+User "1" -- "many" BookItem : adalah pemilik >
+BookTitle "1" -- "many" BookItem : memiliki stok >
+User "1" -- "many" Loan : meminjam >
+BookItem "1" -- "many" Loan : dipinjam >
+User "1" -- "many" Review : memberi ulasan >
+BookTitle "1" -- "many" Review : menerima ulasan >
+
+' HUBUNGAN BARU untuk Galang Dana
+DanaCampaign "1" -- "many" DanaContribution : menerima kontribusi >
+User "1" -- "many" DanaContribution : memberi kontribusi
+
+@enduml
