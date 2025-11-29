@@ -3,16 +3,16 @@ import { withAuth } from "next-auth/middleware"
 import { NextResponse } from "next/server"
 import { getToken } from "next-auth/jwt"
 
-// List rute yang hanya boleh diakses oleh ADMIN
-const ADMIN_PROTECTED_PATHS = ['/admin', '/admin/master-buku', '/admin/peminjaman']
+// List rute yang hanya boleh diakses oleh ADMIN dan DASHBOARD
+const ADMIN_PROTECTED_PATHS = ['/admin'] 
 
 export default withAuth(
   async function middleware(req) {
     const token = await getToken({ req })
 
-    // 1. Cek User Authentication
-    // Jika tidak ada token (belum login), withAuth akan redirect ke halaman login
+    // 1. Logika untuk redirect ke /login jika tidak ada token
     if (!token) {
+        // Logika ini hanya akan dijalankan pada rute yang di-match oleh 'config.matcher'
         return NextResponse.redirect(new URL('/login', req.url))
     }
 
@@ -20,10 +20,7 @@ export default withAuth(
     const pathname = req.nextUrl.pathname
     const isAdminRoute = ADMIN_PROTECTED_PATHS.some(path => pathname.startsWith(path))
 
-    // Asumsikan 'role' user tersimpan di JWT token (didefinisikan di next-auth config)
-    // Di sini, kita akan mengecek role: ADMIN
     if (isAdminRoute && token.role !== 'ADMIN') {
-      // Jika bukan Admin, redirect ke homepage atau halaman 403 (Forbidden)
       return NextResponse.redirect(new URL('/403', req.url))
     }
 
@@ -31,10 +28,8 @@ export default withAuth(
   },
   {
     callbacks: {
-        // Callback ini memastikan kita mendapatkan token sebelum menjalankan middleware di atas
         authorized: ({ token }) => !!token,
     },
-    // Konfigurasi ini memberitahu NextAuth rute mana saja yang akan diproteksi oleh middleware
     pages: {
         signIn: '/login',
     },
@@ -45,12 +40,17 @@ export default withAuth(
 export const config = {
   matcher: [
     /*
-     * Kecualikan:
-     * - API routes (dibatasi oleh NextAuth itu sendiri)
-     * - Static files (_next/static, assets)
-     * - Public files (favicon.ico)
-     * - Halaman otentikasi (login, verify, error)
+     * PROTEKSI: /admin, /dashboard, dll.
+     * KECUALIKAN:
+     * - / (Root/Landing Page)
+     * - /login, /verify, /error
+     * - /user/* (Share Profile)
+     * - /book/* (Detail Buku Public)
+     * - /uploads/* (Aset Publik seperti Gambar Cover/Avatar) <--- TAMBAHKAN INI
      */
-    '/((?!api|_next/static|_next/image|assets|favicon.ico|login|verify|error).*)',
+    '/((?!api|_next/static|_next/image|assets|favicon.ico|login|verify|error|user|book|uploads|$).*)',
+    // Pola: (?!...) akan mengecualikan semua yang ada di dalam kurung.
+    // Pastikan Anda juga memasukkan rute yang perlu diproteksi di matcher ini, 
+    // seperti /dashboard jika Anda ingin dashboard terproteksi.
   ],
 }

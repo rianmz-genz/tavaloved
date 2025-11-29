@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Fredoka, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Providers from "./providers";
+import PublicNavbar from "@/components/layouts/public-navbar";
 
 const fredoka = Fredoka({
   variable: "--font-fredoka",
@@ -19,7 +21,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${fredoka.variable} ${fredoka.className} antialiased`}>{children}</body>
+      <body className={`${fredoka.variable} ${fredoka.className} antialiased`}>
+        <Providers>
+          {/* Navbar di atas main content */}
+          <PublicNavbar />
+
+          {/* Main Content */}
+          {children}
+
+          {/* Footer (Jika kamu ingin footer tetap di bawah) */}
+          {/* Jika halaman public sudah ada footer, hapus footer di sini */}
+        </Providers>
+      </body>
     </html>
   );
 }

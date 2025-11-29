@@ -1,22 +1,35 @@
-import prisma from "@/lib/prisma";
-import { NextRequest, NextResponse } from "next/server";
+// file: app/api/books/route.ts
 
-export async function GET(req: NextRequest) {
+import { NextResponse } from 'next/server';
+import prisma from "@/lib/prisma";
+
+export async function GET() {
     try {
         const books = await prisma.bookTitle.findMany({
-            // Pilih field yang dibutuhkan saja agar payload ringan
             select: {
                 id: true,
                 title: true,
                 author: true,
-                category: true,
+                // Pastikan nama field sesuai dengan schema (judul, penulis, dll)
                 coverImage: true,
                 avgRating: true,
+                synopsis: true,
+                // --- PENTING: Sertakan relasi Categories ---
+                categories: {
+                    select: {
+                        category: {
+                            select: {
+                                name: true,
+                            }
+                        }
+                    }
+                }
             },
             orderBy: {
-                title: 'asc', // Urutkan berdasarkan Judul
+                title: 'asc',
             }
         });
+
         return NextResponse.json(books);
     } catch (error) {
         console.error("Error fetching books:", error);

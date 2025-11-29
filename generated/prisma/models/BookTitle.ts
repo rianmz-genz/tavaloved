@@ -39,7 +39,6 @@ export type BookTitleMinAggregateOutputType = {
   title: string | null
   author: string | null
   synopsis: string | null
-  category: string | null
   coverImage: string | null
   avgRating: number | null
 }
@@ -49,7 +48,6 @@ export type BookTitleMaxAggregateOutputType = {
   title: string | null
   author: string | null
   synopsis: string | null
-  category: string | null
   coverImage: string | null
   avgRating: number | null
 }
@@ -59,7 +57,6 @@ export type BookTitleCountAggregateOutputType = {
   title: number
   author: number
   synopsis: number
-  category: number
   coverImage: number
   avgRating: number
   _all: number
@@ -79,7 +76,6 @@ export type BookTitleMinAggregateInputType = {
   title?: true
   author?: true
   synopsis?: true
-  category?: true
   coverImage?: true
   avgRating?: true
 }
@@ -89,7 +85,6 @@ export type BookTitleMaxAggregateInputType = {
   title?: true
   author?: true
   synopsis?: true
-  category?: true
   coverImage?: true
   avgRating?: true
 }
@@ -99,7 +94,6 @@ export type BookTitleCountAggregateInputType = {
   title?: true
   author?: true
   synopsis?: true
-  category?: true
   coverImage?: true
   avgRating?: true
   _all?: true
@@ -196,7 +190,6 @@ export type BookTitleGroupByOutputType = {
   title: string
   author: string
   synopsis: string | null
-  category: string
   coverImage: string | null
   avgRating: number
   _count: BookTitleCountAggregateOutputType | null
@@ -229,9 +222,9 @@ export type BookTitleWhereInput = {
   title?: Prisma.StringFilter<"BookTitle"> | string
   author?: Prisma.StringFilter<"BookTitle"> | string
   synopsis?: Prisma.StringNullableFilter<"BookTitle"> | string | null
-  category?: Prisma.StringFilter<"BookTitle"> | string
   coverImage?: Prisma.StringNullableFilter<"BookTitle"> | string | null
   avgRating?: Prisma.FloatFilter<"BookTitle"> | number
+  categories?: Prisma.BookCategoryListRelationFilter
   items?: Prisma.BookItemListRelationFilter
   reviews?: Prisma.ReviewListRelationFilter
 }
@@ -241,9 +234,9 @@ export type BookTitleOrderByWithRelationInput = {
   title?: Prisma.SortOrder
   author?: Prisma.SortOrder
   synopsis?: Prisma.SortOrderInput | Prisma.SortOrder
-  category?: Prisma.SortOrder
   coverImage?: Prisma.SortOrderInput | Prisma.SortOrder
   avgRating?: Prisma.SortOrder
+  categories?: Prisma.BookCategoryOrderByRelationAggregateInput
   items?: Prisma.BookItemOrderByRelationAggregateInput
   reviews?: Prisma.ReviewOrderByRelationAggregateInput
 }
@@ -256,9 +249,9 @@ export type BookTitleWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.BookTitleWhereInput | Prisma.BookTitleWhereInput[]
   author?: Prisma.StringFilter<"BookTitle"> | string
   synopsis?: Prisma.StringNullableFilter<"BookTitle"> | string | null
-  category?: Prisma.StringFilter<"BookTitle"> | string
   coverImage?: Prisma.StringNullableFilter<"BookTitle"> | string | null
   avgRating?: Prisma.FloatFilter<"BookTitle"> | number
+  categories?: Prisma.BookCategoryListRelationFilter
   items?: Prisma.BookItemListRelationFilter
   reviews?: Prisma.ReviewListRelationFilter
 }, "id" | "title">
@@ -268,7 +261,6 @@ export type BookTitleOrderByWithAggregationInput = {
   title?: Prisma.SortOrder
   author?: Prisma.SortOrder
   synopsis?: Prisma.SortOrderInput | Prisma.SortOrder
-  category?: Prisma.SortOrder
   coverImage?: Prisma.SortOrderInput | Prisma.SortOrder
   avgRating?: Prisma.SortOrder
   _count?: Prisma.BookTitleCountOrderByAggregateInput
@@ -286,7 +278,6 @@ export type BookTitleScalarWhereWithAggregatesInput = {
   title?: Prisma.StringWithAggregatesFilter<"BookTitle"> | string
   author?: Prisma.StringWithAggregatesFilter<"BookTitle"> | string
   synopsis?: Prisma.StringNullableWithAggregatesFilter<"BookTitle"> | string | null
-  category?: Prisma.StringWithAggregatesFilter<"BookTitle"> | string
   coverImage?: Prisma.StringNullableWithAggregatesFilter<"BookTitle"> | string | null
   avgRating?: Prisma.FloatWithAggregatesFilter<"BookTitle"> | number
 }
@@ -296,9 +287,9 @@ export type BookTitleCreateInput = {
   title: string
   author: string
   synopsis?: string | null
-  category: string
   coverImage?: string | null
   avgRating?: number
+  categories?: Prisma.BookCategoryCreateNestedManyWithoutBookInput
   items?: Prisma.BookItemCreateNestedManyWithoutTitleInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutTitleInput
 }
@@ -308,9 +299,9 @@ export type BookTitleUncheckedCreateInput = {
   title: string
   author: string
   synopsis?: string | null
-  category: string
   coverImage?: string | null
   avgRating?: number
+  categories?: Prisma.BookCategoryUncheckedCreateNestedManyWithoutBookInput
   items?: Prisma.BookItemUncheckedCreateNestedManyWithoutTitleInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutTitleInput
 }
@@ -320,9 +311,9 @@ export type BookTitleUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   author?: Prisma.StringFieldUpdateOperationsInput | string
   synopsis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  category?: Prisma.StringFieldUpdateOperationsInput | string
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avgRating?: Prisma.FloatFieldUpdateOperationsInput | number
+  categories?: Prisma.BookCategoryUpdateManyWithoutBookNestedInput
   items?: Prisma.BookItemUpdateManyWithoutTitleNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutTitleNestedInput
 }
@@ -332,9 +323,9 @@ export type BookTitleUncheckedUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   author?: Prisma.StringFieldUpdateOperationsInput | string
   synopsis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  category?: Prisma.StringFieldUpdateOperationsInput | string
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avgRating?: Prisma.FloatFieldUpdateOperationsInput | number
+  categories?: Prisma.BookCategoryUncheckedUpdateManyWithoutBookNestedInput
   items?: Prisma.BookItemUncheckedUpdateManyWithoutTitleNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutTitleNestedInput
 }
@@ -344,7 +335,6 @@ export type BookTitleCreateManyInput = {
   title: string
   author: string
   synopsis?: string | null
-  category: string
   coverImage?: string | null
   avgRating?: number
 }
@@ -354,7 +344,6 @@ export type BookTitleUpdateManyMutationInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   author?: Prisma.StringFieldUpdateOperationsInput | string
   synopsis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  category?: Prisma.StringFieldUpdateOperationsInput | string
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avgRating?: Prisma.FloatFieldUpdateOperationsInput | number
 }
@@ -364,9 +353,13 @@ export type BookTitleUncheckedUpdateManyInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   author?: Prisma.StringFieldUpdateOperationsInput | string
   synopsis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  category?: Prisma.StringFieldUpdateOperationsInput | string
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avgRating?: Prisma.FloatFieldUpdateOperationsInput | number
+}
+
+export type BookTitleScalarRelationFilter = {
+  is?: Prisma.BookTitleWhereInput
+  isNot?: Prisma.BookTitleWhereInput
 }
 
 export type BookTitleCountOrderByAggregateInput = {
@@ -374,7 +367,6 @@ export type BookTitleCountOrderByAggregateInput = {
   title?: Prisma.SortOrder
   author?: Prisma.SortOrder
   synopsis?: Prisma.SortOrder
-  category?: Prisma.SortOrder
   coverImage?: Prisma.SortOrder
   avgRating?: Prisma.SortOrder
 }
@@ -388,7 +380,6 @@ export type BookTitleMaxOrderByAggregateInput = {
   title?: Prisma.SortOrder
   author?: Prisma.SortOrder
   synopsis?: Prisma.SortOrder
-  category?: Prisma.SortOrder
   coverImage?: Prisma.SortOrder
   avgRating?: Prisma.SortOrder
 }
@@ -398,7 +389,6 @@ export type BookTitleMinOrderByAggregateInput = {
   title?: Prisma.SortOrder
   author?: Prisma.SortOrder
   synopsis?: Prisma.SortOrder
-  category?: Prisma.SortOrder
   coverImage?: Prisma.SortOrder
   avgRating?: Prisma.SortOrder
 }
@@ -407,9 +397,18 @@ export type BookTitleSumOrderByAggregateInput = {
   avgRating?: Prisma.SortOrder
 }
 
-export type BookTitleScalarRelationFilter = {
-  is?: Prisma.BookTitleWhereInput
-  isNot?: Prisma.BookTitleWhereInput
+export type BookTitleCreateNestedOneWithoutCategoriesInput = {
+  create?: Prisma.XOR<Prisma.BookTitleCreateWithoutCategoriesInput, Prisma.BookTitleUncheckedCreateWithoutCategoriesInput>
+  connectOrCreate?: Prisma.BookTitleCreateOrConnectWithoutCategoriesInput
+  connect?: Prisma.BookTitleWhereUniqueInput
+}
+
+export type BookTitleUpdateOneRequiredWithoutCategoriesNestedInput = {
+  create?: Prisma.XOR<Prisma.BookTitleCreateWithoutCategoriesInput, Prisma.BookTitleUncheckedCreateWithoutCategoriesInput>
+  connectOrCreate?: Prisma.BookTitleCreateOrConnectWithoutCategoriesInput
+  upsert?: Prisma.BookTitleUpsertWithoutCategoriesInput
+  connect?: Prisma.BookTitleWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.BookTitleUpdateToOneWithWhereWithoutCategoriesInput, Prisma.BookTitleUpdateWithoutCategoriesInput>, Prisma.BookTitleUncheckedUpdateWithoutCategoriesInput>
 }
 
 export type FloatFieldUpdateOperationsInput = {
@@ -448,14 +447,74 @@ export type BookTitleUpdateOneRequiredWithoutReviewsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.BookTitleUpdateToOneWithWhereWithoutReviewsInput, Prisma.BookTitleUpdateWithoutReviewsInput>, Prisma.BookTitleUncheckedUpdateWithoutReviewsInput>
 }
 
+export type BookTitleCreateWithoutCategoriesInput = {
+  id?: string
+  title: string
+  author: string
+  synopsis?: string | null
+  coverImage?: string | null
+  avgRating?: number
+  items?: Prisma.BookItemCreateNestedManyWithoutTitleInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutTitleInput
+}
+
+export type BookTitleUncheckedCreateWithoutCategoriesInput = {
+  id?: string
+  title: string
+  author: string
+  synopsis?: string | null
+  coverImage?: string | null
+  avgRating?: number
+  items?: Prisma.BookItemUncheckedCreateNestedManyWithoutTitleInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutTitleInput
+}
+
+export type BookTitleCreateOrConnectWithoutCategoriesInput = {
+  where: Prisma.BookTitleWhereUniqueInput
+  create: Prisma.XOR<Prisma.BookTitleCreateWithoutCategoriesInput, Prisma.BookTitleUncheckedCreateWithoutCategoriesInput>
+}
+
+export type BookTitleUpsertWithoutCategoriesInput = {
+  update: Prisma.XOR<Prisma.BookTitleUpdateWithoutCategoriesInput, Prisma.BookTitleUncheckedUpdateWithoutCategoriesInput>
+  create: Prisma.XOR<Prisma.BookTitleCreateWithoutCategoriesInput, Prisma.BookTitleUncheckedCreateWithoutCategoriesInput>
+  where?: Prisma.BookTitleWhereInput
+}
+
+export type BookTitleUpdateToOneWithWhereWithoutCategoriesInput = {
+  where?: Prisma.BookTitleWhereInput
+  data: Prisma.XOR<Prisma.BookTitleUpdateWithoutCategoriesInput, Prisma.BookTitleUncheckedUpdateWithoutCategoriesInput>
+}
+
+export type BookTitleUpdateWithoutCategoriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  author?: Prisma.StringFieldUpdateOperationsInput | string
+  synopsis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avgRating?: Prisma.FloatFieldUpdateOperationsInput | number
+  items?: Prisma.BookItemUpdateManyWithoutTitleNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutTitleNestedInput
+}
+
+export type BookTitleUncheckedUpdateWithoutCategoriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  author?: Prisma.StringFieldUpdateOperationsInput | string
+  synopsis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avgRating?: Prisma.FloatFieldUpdateOperationsInput | number
+  items?: Prisma.BookItemUncheckedUpdateManyWithoutTitleNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutTitleNestedInput
+}
+
 export type BookTitleCreateWithoutItemsInput = {
   id?: string
   title: string
   author: string
   synopsis?: string | null
-  category: string
   coverImage?: string | null
   avgRating?: number
+  categories?: Prisma.BookCategoryCreateNestedManyWithoutBookInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutTitleInput
 }
 
@@ -464,9 +523,9 @@ export type BookTitleUncheckedCreateWithoutItemsInput = {
   title: string
   author: string
   synopsis?: string | null
-  category: string
   coverImage?: string | null
   avgRating?: number
+  categories?: Prisma.BookCategoryUncheckedCreateNestedManyWithoutBookInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutTitleInput
 }
 
@@ -491,9 +550,9 @@ export type BookTitleUpdateWithoutItemsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   author?: Prisma.StringFieldUpdateOperationsInput | string
   synopsis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  category?: Prisma.StringFieldUpdateOperationsInput | string
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avgRating?: Prisma.FloatFieldUpdateOperationsInput | number
+  categories?: Prisma.BookCategoryUpdateManyWithoutBookNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutTitleNestedInput
 }
 
@@ -502,9 +561,9 @@ export type BookTitleUncheckedUpdateWithoutItemsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   author?: Prisma.StringFieldUpdateOperationsInput | string
   synopsis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  category?: Prisma.StringFieldUpdateOperationsInput | string
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avgRating?: Prisma.FloatFieldUpdateOperationsInput | number
+  categories?: Prisma.BookCategoryUncheckedUpdateManyWithoutBookNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutTitleNestedInput
 }
 
@@ -513,9 +572,9 @@ export type BookTitleCreateWithoutReviewsInput = {
   title: string
   author: string
   synopsis?: string | null
-  category: string
   coverImage?: string | null
   avgRating?: number
+  categories?: Prisma.BookCategoryCreateNestedManyWithoutBookInput
   items?: Prisma.BookItemCreateNestedManyWithoutTitleInput
 }
 
@@ -524,9 +583,9 @@ export type BookTitleUncheckedCreateWithoutReviewsInput = {
   title: string
   author: string
   synopsis?: string | null
-  category: string
   coverImage?: string | null
   avgRating?: number
+  categories?: Prisma.BookCategoryUncheckedCreateNestedManyWithoutBookInput
   items?: Prisma.BookItemUncheckedCreateNestedManyWithoutTitleInput
 }
 
@@ -551,9 +610,9 @@ export type BookTitleUpdateWithoutReviewsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   author?: Prisma.StringFieldUpdateOperationsInput | string
   synopsis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  category?: Prisma.StringFieldUpdateOperationsInput | string
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avgRating?: Prisma.FloatFieldUpdateOperationsInput | number
+  categories?: Prisma.BookCategoryUpdateManyWithoutBookNestedInput
   items?: Prisma.BookItemUpdateManyWithoutTitleNestedInput
 }
 
@@ -562,9 +621,9 @@ export type BookTitleUncheckedUpdateWithoutReviewsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   author?: Prisma.StringFieldUpdateOperationsInput | string
   synopsis?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  category?: Prisma.StringFieldUpdateOperationsInput | string
   coverImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avgRating?: Prisma.FloatFieldUpdateOperationsInput | number
+  categories?: Prisma.BookCategoryUncheckedUpdateManyWithoutBookNestedInput
   items?: Prisma.BookItemUncheckedUpdateManyWithoutTitleNestedInput
 }
 
@@ -574,11 +633,13 @@ export type BookTitleUncheckedUpdateWithoutReviewsInput = {
  */
 
 export type BookTitleCountOutputType = {
+  categories: number
   items: number
   reviews: number
 }
 
 export type BookTitleCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  categories?: boolean | BookTitleCountOutputTypeCountCategoriesArgs
   items?: boolean | BookTitleCountOutputTypeCountItemsArgs
   reviews?: boolean | BookTitleCountOutputTypeCountReviewsArgs
 }
@@ -591,6 +652,13 @@ export type BookTitleCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Ex
    * Select specific fields to fetch from the BookTitleCountOutputType
    */
   select?: Prisma.BookTitleCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * BookTitleCountOutputType without action
+ */
+export type BookTitleCountOutputTypeCountCategoriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BookCategoryWhereInput
 }
 
 /**
@@ -613,9 +681,9 @@ export type BookTitleSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   title?: boolean
   author?: boolean
   synopsis?: boolean
-  category?: boolean
   coverImage?: boolean
   avgRating?: boolean
+  categories?: boolean | Prisma.BookTitle$categoriesArgs<ExtArgs>
   items?: boolean | Prisma.BookTitle$itemsArgs<ExtArgs>
   reviews?: boolean | Prisma.BookTitle$reviewsArgs<ExtArgs>
   _count?: boolean | Prisma.BookTitleCountOutputTypeDefaultArgs<ExtArgs>
@@ -626,7 +694,6 @@ export type BookTitleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   title?: boolean
   author?: boolean
   synopsis?: boolean
-  category?: boolean
   coverImage?: boolean
   avgRating?: boolean
 }, ExtArgs["result"]["bookTitle"]>
@@ -636,7 +703,6 @@ export type BookTitleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   title?: boolean
   author?: boolean
   synopsis?: boolean
-  category?: boolean
   coverImage?: boolean
   avgRating?: boolean
 }, ExtArgs["result"]["bookTitle"]>
@@ -646,13 +712,13 @@ export type BookTitleSelectScalar = {
   title?: boolean
   author?: boolean
   synopsis?: boolean
-  category?: boolean
   coverImage?: boolean
   avgRating?: boolean
 }
 
-export type BookTitleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "author" | "synopsis" | "category" | "coverImage" | "avgRating", ExtArgs["result"]["bookTitle"]>
+export type BookTitleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "author" | "synopsis" | "coverImage" | "avgRating", ExtArgs["result"]["bookTitle"]>
 export type BookTitleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  categories?: boolean | Prisma.BookTitle$categoriesArgs<ExtArgs>
   items?: boolean | Prisma.BookTitle$itemsArgs<ExtArgs>
   reviews?: boolean | Prisma.BookTitle$reviewsArgs<ExtArgs>
   _count?: boolean | Prisma.BookTitleCountOutputTypeDefaultArgs<ExtArgs>
@@ -663,6 +729,7 @@ export type BookTitleIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
 export type $BookTitlePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "BookTitle"
   objects: {
+    categories: Prisma.$BookCategoryPayload<ExtArgs>[]
     items: Prisma.$BookItemPayload<ExtArgs>[]
     reviews: Prisma.$ReviewPayload<ExtArgs>[]
   }
@@ -671,7 +738,6 @@ export type $BookTitlePayload<ExtArgs extends runtime.Types.Extensions.InternalA
     title: string
     author: string
     synopsis: string | null
-    category: string
     coverImage: string | null
     avgRating: number
   }, ExtArgs["result"]["bookTitle"]>
@@ -1068,6 +1134,7 @@ readonly fields: BookTitleFieldRefs;
  */
 export interface Prisma__BookTitleClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  categories<T extends Prisma.BookTitle$categoriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.BookTitle$categoriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BookCategoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   items<T extends Prisma.BookTitle$itemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.BookTitle$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BookItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reviews<T extends Prisma.BookTitle$reviewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.BookTitle$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -1103,7 +1170,6 @@ export interface BookTitleFieldRefs {
   readonly title: Prisma.FieldRef<"BookTitle", 'String'>
   readonly author: Prisma.FieldRef<"BookTitle", 'String'>
   readonly synopsis: Prisma.FieldRef<"BookTitle", 'String'>
-  readonly category: Prisma.FieldRef<"BookTitle", 'String'>
   readonly coverImage: Prisma.FieldRef<"BookTitle", 'String'>
   readonly avgRating: Prisma.FieldRef<"BookTitle", 'Float'>
 }
@@ -1491,6 +1557,30 @@ export type BookTitleDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Limit how many BookTitles to delete.
    */
   limit?: number
+}
+
+/**
+ * BookTitle.categories
+ */
+export type BookTitle$categoriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BookCategory
+   */
+  select?: Prisma.BookCategorySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BookCategory
+   */
+  omit?: Prisma.BookCategoryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BookCategoryInclude<ExtArgs> | null
+  where?: Prisma.BookCategoryWhereInput
+  orderBy?: Prisma.BookCategoryOrderByWithRelationInput | Prisma.BookCategoryOrderByWithRelationInput[]
+  cursor?: Prisma.BookCategoryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BookCategoryScalarFieldEnum | Prisma.BookCategoryScalarFieldEnum[]
 }
 
 /**

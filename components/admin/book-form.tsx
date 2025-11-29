@@ -1,6 +1,6 @@
 // file: components/admin/book-form.tsx
 
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Tambahkan useEffect
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,15 +8,28 @@ import { Card, CardContent, CardTitle, CardHeader } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Import Select components
 
-// ... (Interface BookTitle tetap sama di file page.tsx)
-
-interface BookFormProps {
-  onSuccess: () => void;
+// --- Interface untuk User (Pemilik) ---
+interface SimpleUser {
+    id: string;
+    name: string | null;
+    email: string | null;
 }
 
+// --- Fetch User untuk Dropdown ---
+const fetchUsers = async (): Promise<SimpleUser[]> => {
+    // Diasumsikan kamu akan membuat API khusus untuk mendapatkan user pemilik item (setidaknya kontributor/admin)
+    // Untuk sementara, kita pakai endpoint dummy. Kamu harus buat /api/users
+    const response = await fetch('/api/users'); 
+    if (!response.ok) {
+        console.error('Gagal mengambil daftar user pemilik.');
+        return [];
+    }
+    return response.json();
+};
+
 const createBook = async (formData: FormData) => {
-  // ... (Fungsi createBook tetap sama)
   const response = await fetch("/api/admin/book", {
     method: "POST",
     body: formData,
@@ -28,29 +41,54 @@ const createBook = async (formData: FormData) => {
   return response.json();
 };
 
+interface BookFormProps {
+  onSuccess: () => void;
+}
+
 export function BookForm({ onSuccess }: BookFormProps) {
   const { data: session } = useSession();
-  const adminUserId = session?.user?.id;
+  
+  // Ambil ID admin yang sedang login sebagai default owner
+  const defaultOwnerId = session?.user?.id || ''; 
 
+  const [users, setUsers] = useState<SimpleUser[]>([]);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     author: "",
     synopsis: "",
-    category: "",
+    categories: "", // GANTI: category -> categories (string dipisahkan koma)
     barcodeSN: "",
     condition: "Baik",
+    ownerId: defaultOwnerId, // TAMBAH: State untuk ownerId
   });
-  const [status, setStatus] = useState<string | null>(null);
+  
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // ... (handleChange dan handleFileChange tetap sama)
+  // --- Load User Pemilik ---
+  useEffect(() => {
+    const loadUsers = async () => {
+      const fetchedUsers = await fetchUsers();
+      setUsers(fetchedUsers);
+      // Set ownerId ke user yang sedang login jika ada di daftar user
+      if (defaultOwnerId && fetchedUsers.some(u => u.id === defaultOwnerId)) {
+        setFormData(prev => ({ ...prev, ownerId: defaultOwnerId }));
+      }
+    };
+    loadUsers();
+  }, [defaultOwnerId]);
+
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { id, value } = e.target;
-    setFormData((prev) => ({ ...prev, [id]: value }));
+    setFormData((prev) => ({ ...prev, [id === 'category' ? 'categories' : id]: value })); // Handle perubahan nama state
+  };
+  
+  const handleSelectChange = (value: string) => {
+    setFormData(prev => ({ ...prev, ownerId: value }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,58 +101,59 @@ export function BookForm({ onSuccess }: BookFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // ... (Logika handleSubmit tetap sama, tapi panggil onSuccess di akhir)
-    if (!adminUserId) {
-      setError("Error: User Admin ID tidak ditemukan.");
-      return;
+    
+    if (!formData.ownerId) {
+        toast.error("Validasi Gagal", { description: "Pemilik Item wajib dipilih." });
+        return;
     }
     if (!coverFile) {
-      setError("Cover buku wajib di-upload.");
-      return;
+        setError("Cover buku wajib di-upload.");
+        return;
     }
 
     setIsLoading(true);
-    setStatus(null);
     setError(null);
     const loadingToastId = toast.loading(
       "Sedang memproses data dan meng-upload file..."
     );
     try {
       const formPayload = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        formPayload.append(key, value);
-      });
+      
+      // Kirim semua field teks, categories dikirim sebagai string 'category'
+      formPayload.append("title", formData.title);
+      formPayload.append("author", formData.author);
+      formPayload.append("synopsis", formData.synopsis);
+      formPayload.append("category", formData.categories); // PENTING: kirim sebagai 'category'
+      formPayload.append("barcodeSN", formData.barcodeSN);
+      formPayload.append("condition", formData.condition);
+      formPayload.append("ownerId", formData.ownerId);
+
       formPayload.append("coverImage", coverFile);
-      formPayload.append("ownerId", adminUserId);
 
       const result = await createBook(formPayload);
-      console.log(result);
-      setStatus(
-        `Buku "${result.title.title}" berhasil ditambahkan! Barcode: ${result.item.barcodeSN}`
-      );
-
-      // Panggil onSuccess untuk memberi tahu komponen induk agar me-refresh tabel
+      
       onSuccess();
-
+      
       // Reset form
       setFormData({
         title: "",
         author: "",
         synopsis: "",
-        category: "",
+        categories: "",
         barcodeSN: "",
         condition: "Baik",
+        ownerId: defaultOwnerId, // Reset ke default owner
       });
       setCoverFile(null);
       toast.success("Buku Berhasil Disimpan!", {
-        description: `Judul: ${result.title.title}, Barcode: ${result.item.barcodeSN}`,
-        id: loadingToastId, // Tutup toast loading
+        description: `Judul: ${result.title.judul}, Barcode: ${result.item.barcode_sn}`,
+        id: loadingToastId,
       });
     } catch (err: any) {
       console.error(err);
       toast.error("Gagal Menyimpan Data", {
         description: err.message,
-        id: loadingToastId, // Tutup toast loading
+        id: loadingToastId,
       });
     } finally {
       setIsLoading(false);
@@ -129,13 +168,8 @@ export function BookForm({ onSuccess }: BookFormProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {status && (
-            <div className="p-4 bg-green-100 text-green-700 rounded-md">
-              {status}
-            </div>
-          )}
           {error && (
-            <div className="p-4 bg-red-100 text-red-700 rounded-md">
+            <div className="p-3 bg-red-100 text-destructive border border-destructive/20 rounded-md text-sm">
               {error}
             </div>
           )}
@@ -165,11 +199,11 @@ export function BookForm({ onSuccess }: BookFormProps) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="category">Kategori</Label>
+              <Label htmlFor="categories">Kategori (Pisahkan dengan koma, cth: Fiksi, Sains)</Label>
               <Input
-                id="category"
+                id="categories"
                 required
-                value={formData.category}
+                value={formData.categories}
                 onChange={handleChange}
               />
             </div>
@@ -218,6 +252,23 @@ export function BookForm({ onSuccess }: BookFormProps) {
                 value={formData.condition}
                 onChange={handleChange}
               />
+            </div>
+            {/* TAMBAH INPUT PEMILIK */}
+             <div className="space-y-2">
+              <Label htmlFor="ownerId">Pemilik Item</Label>
+               <Select value={formData.ownerId} onValueChange={handleSelectChange} required>
+                <SelectTrigger id="ownerId">
+                  <SelectValue placeholder="Pilih pemilik item" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users.map(user => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.name} ({user.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">Biasanya admin/kontributor yang terdaftar.</p>
             </div>
           </div>
 

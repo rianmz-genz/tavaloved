@@ -14,25 +14,29 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-// Asumsi Dialog dkk sudah diimpor dari shadcn/ui
 
-// --- Interface untuk tipe data BookTitle ---
+// --- Interface untuk tipe data Category (relasi) ---
+interface Category {
+  category: {
+    name: string;
+  };
+}
+
+// --- Interface untuk tipe data BookTitle (UPDATE) ---
 interface BookTitle {
   id: string;
   title: string;
   author: string;
-  category: string;
+  // Hapus: category: string;
+  categories: Category[]; // GANTI: Menggunakan relasi categories
   coverImage?: string | null;
   avgRating: number;
 }
 
-// State baru untuk mengelola dialog
-interface BookToDelete {
-  id: string;
-  title: string;
-}
+// ... (State BookToDelete tetap sama)
 
 const fetchBooks = async (): Promise<BookTitle[]> => {
+  // Kita harus meminta API untuk menyertakan relasi Categories
   const response = await fetch("/api/books");
   if (!response.ok) {
     throw new Error("Gagal mengambil daftar buku.");
@@ -60,9 +64,8 @@ export function BookTable({ refreshKey }: BookTableProps) {
   const [isFetching, setIsFetching] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // State untuk dialog
   const [openDialog, setOpenDialog] = useState(false);
-  const [selectedBook, setSelectedBook] = useState<BookToDelete | null>(null);
+  const [selectedBook, setSelectedBook] = useState<BookTitle | null>(null);
 
   const loadBooks = async () => {
     setIsFetching(true);
@@ -80,66 +83,53 @@ export function BookTable({ refreshKey }: BookTableProps) {
     loadBooks();
   }, [refreshKey]);
 
-  // --- Fungsi yang benar-benar melakukan Delete (dengan minimal delay) ---
   const executeDelete = async () => {
     if (!selectedBook) return;
 
     const bookId = selectedBook.id;
     const bookTitle = selectedBook.title;
 
-    // Set loading state dan tutup dialog (agar tidak mengganggu)
     setDeletingId(bookId);
     setOpenDialog(false);
 
-    // 1. Mulai Toast Loading
     const deletingToastId = toast.loading(`Menghapus ${bookTitle}...`);
-
-    // 2. Mulai timer (minimal 500ms) dan delete API request secara paralel
     const startTime = Date.now();
+    const minDuration = 500;
 
     try {
       await deleteBook(bookId);
 
-      const endTime = Date.now();
-      const duration = endTime - startTime;
-      const minDuration = 500; // Minimal 500ms agar toast tidak kedip
-
-      // Tambahkan delay jika proses terlalu cepat
+      const duration = Date.now() - startTime;
       if (duration < minDuration) {
         await new Promise((resolve) =>
           setTimeout(resolve, minDuration - duration)
         );
       }
 
-      // 3. Sukses
       toast.success("Berhasil Dihapus", {
         description: `Judul "${bookTitle}" dan semua stok terkait telah dihapus.`,
         id: deletingToastId,
-        duration: 3000, // Tampilkan 3 detik
+        duration: 3000,
       });
 
       await loadBooks();
     } catch (error: any) {
-      // 4. Gagal
       toast.error("Gagal Menghapus Buku", {
         description: error.message,
         id: deletingToastId,
       });
       console.error(error);
     } finally {
-      // 5. Cleanup
       setDeletingId(null);
       setSelectedBook(null);
-      setTimeout(() => toast.dismiss(deletingToastId), 2000);
+      setTimeout(() =>       toast.dismiss(deletingToastId), 3000)
     }
   };
 
-  // --- Handler Tombol Delete (Membuka Dialog) ---
   const handleOpenDeleteDialog = (book: BookTitle) => {
-    setSelectedBook({ id: book.id, title: book.title });
+    setSelectedBook(book);
     setOpenDialog(true);
   };
-  // ---------------------------------------------
 
   return (
     <>
@@ -166,7 +156,8 @@ export function BookTable({ refreshKey }: BookTableProps) {
                   <tr className="text-left text-sm font-medium text-muted-foreground uppercase tracking-wider">
                     <th className="px-3 py-3 w-20">Cover</th>
                     <th className="px-3 py-3">Judul & Penulis</th>
-                    <th className="px-3 py-3">Kategori</th>
+                    <th className="px-3 py-3">Tags/Kategori</th>{" "}
+                    {/* GANTI JUDUL KOLOM */}
                     <th className="px-3 py-3 w-[100px]">Rating</th>
                     <th className="px-3 py-3 w-[100px]">Aksi</th>
                   </tr>
@@ -198,18 +189,27 @@ export function BookTable({ refreshKey }: BookTableProps) {
                           oleh {book.author}
                         </div>
                       </td>
-                      <td className="px-3 py-4 whitespace-nowrap text-sm text-secondary-foreground">
-                        {book.category}
+                      <td className="px-3 py-4 text-sm text-secondary-foreground">
+                        {/* TAMPILKAN TAGS/KATEGORI */}
+                        <div className="flex flex-wrap gap-1">
+                          {book.categories.map((cat, index) => (
+                            <span
+                              key={index}
+                              className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full font-medium"
+                            >
+                              {cat.category.name}
+                            </span>
+                          ))}
+                        </div>
                       </td>
                       <td className="px-3 py-4 whitespace-nowrap text-sm">
                         ⭐ {book.avgRating.toFixed(1)}
                       </td>
                       <td className="px-3 py-4 whitespace-nowrap text-sm">
-                        {/* Tombol Delete Trigger */}
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => handleOpenDeleteDialog(book)} // Membuka Dialog
+                          onClick={() => handleOpenDeleteDialog(book)}
                           disabled={deletingId === book.id || isFetching}
                         >
                           {deletingId === book.id ? (
@@ -249,7 +249,7 @@ export function BookTable({ refreshKey }: BookTableProps) {
             </Button>
             <Button
               variant="destructive"
-              onClick={executeDelete} // Panggil fungsi delete yang sebenarnya
+              onClick={executeDelete}
               disabled={deletingId !== null}
             >
               Ya, Hapus Permanen

@@ -3,10 +3,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from "next-auth";
 import prisma from "@/lib/prisma";
-import { writeFile, access, mkdir } from 'fs/promises'; // TAMBAHKAN access dan mkdir
+import { writeFile, access, mkdir, unlink } from 'fs/promises'; // Tambahkan unlink untuk hapus file
 import path from 'path';
 
-// Helper function untuk membuat URL yang aman (Slug)
+// ... (fungsi slugify tetap sama)
 const slugify = (text: string) => {
     return text.toLowerCase()
         .trim()
@@ -16,150 +16,160 @@ const slugify = (text: string) => {
 };
 
 
-// Handler POST untuk menambah buku
+// Handler POST (Menambah Buku & Tags)
 export async function POST(req: NextRequest) {
     try {
+       
 
-        // 1. Ambil FormData
         const formData = await req.formData();
-
-        // 2. Ambil semua field
+        
         const title = formData.get('title') as string;
         const author = formData.get('author') as string;
         const synopsis = formData.get('synopsis') as string;
-        const category = formData.get('category') as string;
+        const rawCategories = formData.get('category') as string; // String kategori dipisahkan koma
         const barcodeSN = formData.get('barcodeSN') as string;
         const condition = formData.get('condition') as string;
-        const ownerId = formData.get('ownerId') as string;
-        const coverFile = formData.get('coverImage') as File; // Ambil file cover
+        const ownerId = formData.get('ownerId') as string; // ID user pemilik
+        const coverFile = formData.get('coverImage') as File; 
 
-        if (!title || !author || !category || !barcodeSN || !ownerId || !coverFile) {
-            return new NextResponse('Missing required fields, including cover image.', { status: 400 });
+        if (!title || !author || !rawCategories || !barcodeSN || !ownerId || !(coverFile instanceof File)) {
+             return new NextResponse('Missing required fields, including cover image or categories.', { status: 400 });
         }
-
+        
+        // Pisahkan kategori (misal: "Fiksi, Romance" -> ["Fiksi", "Romance"])
+        const categoryNames = rawCategories.split(',').map(name => name.trim()).filter(name => name.length > 0);
+        
+        // --- PROSES UPLOAD FILE ---
         let coverImageUrl = null;
         if (coverFile instanceof File) {
             const bytes = await coverFile.arrayBuffer();
             const buffer = Buffer.from(bytes);
 
-            // Buat nama file unik dan aman
             const fileExtension = path.extname(coverFile.name);
             const safeFileName = `${slugify(title)}-${Date.now()}${fileExtension}`;
-
-            // Tentukan folder tujuan (path tanpa nama file)
             const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-            const uploadPath = path.join(uploadDir, safeFileName); // Path file lengkap
+            const uploadPath = path.join(uploadDir, safeFileName); 
 
-            // **LANGKAH BARU: CEK & BUAT FOLDER DULU**
-            try {
-                // Cek apakah direktori sudah ada (dengan hak akses)
-                await access(uploadDir);
-            } catch (error) {
-                // Jika error (tidak ada direktori/akses), buat direktori
-                await mkdir(uploadDir, { recursive: true }); // recursive: true = buat folder induk jika belum ada
-            }
+            try { await access(uploadDir); } catch (error) { await mkdir(uploadDir, { recursive: true }); }
 
-            // TULIS FILE KE PATH LENGKAP
             await writeFile(uploadPath, buffer);
-
-            // URL yang akan disimpan di database
-            coverImageUrl = `/uploads/${safeFileName}`;
+            coverImageUrl = `/uploads/${safeFileName}`; 
         }
         // -------------------------
 
-        // Cek apakah judul buku sudah ada
-        let bookTitle = await prisma.bookTitle.findUnique({
-            where: { title: title },
-        });
+        // 1. Cari atau Buat BookTitle
+        let bookTitle = await prisma.bookTitle.findUnique({ where: { title: title }, });
 
         if (!bookTitle) {
-            // Jika judul belum ada, buat BookTitle baru
             bookTitle = await prisma.bookTitle.create({
                 data: {
                     title: title,
                     author: author,
                     synopsis: synopsis,
-                    category: category,
-                    coverImage: coverImageUrl, // <-- SIMPAN URL GAMBAR
+                    coverImage: coverImageUrl, 
                 },
             });
-        } else {
-            // Jika judul sudah ada, kamu bisa update cover imagenya jika file baru diupload
-            if (coverImageUrl) {
-                await prisma.bookTitle.update({
-                    where: { id: bookTitle.id },
-                    data: { coverImage: coverImageUrl },
+        }
+        
+        // 2. Proses Kategori (Tags)
+        if (categoryNames.length > 0) {
+            // Hapus semua relasi lama jika ini update (opsional)
+            // await prisma.bookCategory.deleteMany({ where: { bookId: bookTitle.id } });
+
+            for (const name of categoryNames) {
+                // Cari atau buat Category baru
+                const category = await prisma.category.upsert({
+                    where: { name: name },
+                    update: {},
+                    create: { name: name },
                 });
+
+                // Buat relasi di tabel BookCategory
+                try {
+                    await prisma.bookCategory.create({
+                        data: {
+                            bookId: bookTitle.id,
+                            categoryId: category.id,
+                        },
+                    });
+                } catch (e) {
+                    // Abaikan jika relasi (bookId, categoryId) sudah ada
+                }
             }
         }
 
-        // Buat BookItem (stok) baru
+        // 3. Buat BookItem (stok) baru
         const bookItem = await prisma.bookItem.create({
             data: {
                 barcodeSN: barcodeSN,
                 condition: condition,
                 titleId: bookTitle.id,
-                ownerId: ownerId,
+                ownerId: ownerId, 
             },
         });
 
-        return NextResponse.json({
-            message: 'Book successfully created/updated.',
-            title: bookTitle,
+        return NextResponse.json({ 
+            message: 'Book successfully created/updated.', 
+            title: bookTitle, 
             item: bookItem,
-            cover: coverImageUrl
         }, { status: 201 });
 
     } catch (error: any) {
         console.error('Error adding book:', error);
-
         if (error.code === 'P2002') {
-            return new NextResponse('Barcode/SN sudah digunakan. Cek kembali.', { status: 409 });
+             return new NextResponse('Barcode/SN sudah digunakan atau Judul sudah ada.', { status: 409 });
         }
-
         return new NextResponse(`Server error: ${error.message}`, { status: 500 });
     }
 }
 
+
+// Handler DELETE (Hapus Buku & Item Terkait)
 export async function DELETE(req: NextRequest) {
     try {
 
 
-        // Ambil ID dari query parameter
         const { searchParams } = new URL(req.url);
         const bookId = searchParams.get('id');
 
-        if (!bookId) {
-            return new NextResponse('Missing book ID.', { status: 400 });
-        }
+        if (!bookId) { return new NextResponse('Missing book ID.', { status: 400 }); }
 
-        // 1. Hapus semua BookItem terkait (karena relasi di schema.prisma adalah RESTRICT/SET NULL)
-        // Kita perlu menghapus BookItem secara eksplisit (atau pastikan CASCADE di DB)
-        // Berdasarkan schema kamu, BookItem memiliki fk_id_judul yang me-refer BookTitle.
-        // Kita asumsikan relasi adalah CASCADE DELETE agar semua item terhapus otomatis.
+        // Cari dulu data buku untuk mendapatkan URL gambar (jika ada)
+        const book = await prisma.bookTitle.findUnique({ where: { id: bookId } });
+        if (!book) { return new NextResponse('Book not found.', { status: 404 }); }
 
-        // Tapi karena kamu pakai RESTRICT di beberapa tempat, kita lakukan secara eksplisit untuk aman:
-        await prisma.bookItem.deleteMany({
-            where: {
-                titleId: bookId,
+        await prisma.$transaction(async (tx) => {
+            // 1. Hapus relasi BookCategory
+            await tx.bookCategory.deleteMany({ where: { bookId: bookId } });
+
+            // 2. Hapus BookItem terkait
+            await tx.bookItem.deleteMany({ where: { titleId: bookId } });
+            
+            // 3. Hapus BookTitle
+            await tx.bookTitle.delete({ where: { id: bookId } });
+
+            // 4. Hapus file gambar dari server (Non-blocking)
+            if (book.coverImage) {
+                const filePath = path.join(process.cwd(), 'public', book.coverImage);
+                try {
+                    await unlink(filePath);
+                } catch (err: any) {
+                    // Abaikan jika file tidak ditemukan (ENOENT)
+                    if (err.code !== 'ENOENT') {
+                        console.error('Error deleting file:', err);
+                    }
+                }
             }
         });
 
-        // 2. Hapus BookTitle
-        const deletedBook = await prisma.bookTitle.delete({
-            where: { id: bookId },
-        });
 
-        return NextResponse.json({
-            message: 'Book title and associated items deleted successfully.',
-            deletedId: deletedBook.id
+        return NextResponse.json({ 
+            message: 'Book title, items, and relations deleted successfully.', 
+            deletedId: bookId
         });
 
     } catch (error: any) {
-        // P2025 = Not Found
-        if (error.code === 'P2025') {
-            return new NextResponse('Book not found.', { status: 404 });
-        }
+        if (error.code === 'P2025') { return new NextResponse('Book not found.', { status: 404 }); }
         console.error('Error deleting book:', error);
         return new NextResponse('Internal server error during deletion.', { status: 500 });
     }

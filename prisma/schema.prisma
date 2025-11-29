@@ -86,6 +86,32 @@ enum UserRole {
 }
 
 
+model Category {
+  id              String      @id @default(cuid())
+  name            String      @unique @map("nama_kategori") 
+
+  // Hubungan ke BookTitle melalui tabel BookCategory
+  books           BookCategory[]
+
+  @@map("categories")
+}
+
+// =========================================================
+// MODEL BOOK CATEGORY (Tabel Penghubung Many-to-Many)
+// =========================================================
+model BookCategory {
+  bookId          String      @map("fk_id_buku")
+  categoryId      String      @map("fk_id_kategori")
+  assignedAt      DateTime    @default(now())
+
+  book            BookTitle   @relation(fields: [bookId], references: [id])
+  category        Category    @relation(fields: [categoryId], references: [id])
+
+  @@id([bookId, categoryId]) 
+  @@map("book_categories")
+}
+
+
 // =========================================================
 // MODEL BOOK TITLES (Katalog Judul)
 // =========================================================
@@ -94,9 +120,14 @@ model BookTitle {
   title           String      @unique @map("judul")
   author          String      @map("penulis")
   synopsis        String?     @db.Text
-  category        String      @map("kategori")
-  coverImage      String?     @map("cover_image_url") // <-- TAMBAHKAN INI
+  
+  // HAPUS FIELD category String @map("kategori")
+  
+  coverImage      String?     @map("cover_image_url") 
   avgRating       Float       @default(0.0) @map("avg_rating")
+
+  // Hubungan BARU ke Category
+  categories      BookCategory[] 
 
   // Hubungan
   items           BookItem[]

@@ -60,6 +60,16 @@ export type VerificationToken = Prisma.VerificationTokenModel
  */
 export type User = Prisma.UserModel
 /**
+ * Model Category
+ * 
+ */
+export type Category = Prisma.CategoryModel
+/**
+ * Model BookCategory
+ * 
+ */
+export type BookCategory = Prisma.BookCategoryModel
+/**
  * Model BookTitle
  * 
  */

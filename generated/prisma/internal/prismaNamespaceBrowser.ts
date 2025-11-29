@@ -55,6 +55,8 @@ export const ModelName = {
   Session: 'Session',
   VerificationToken: 'VerificationToken',
   User: 'User',
+  Category: 'Category',
+  BookCategory: 'BookCategory',
   BookTitle: 'BookTitle',
   BookItem: 'BookItem',
   Loan: 'Loan',
@@ -130,12 +132,28 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+export const CategoryScalarFieldEnum = {
+  id: 'id',
+  name: 'name'
+} as const
+
+export type CategoryScalarFieldEnum = (typeof CategoryScalarFieldEnum)[keyof typeof CategoryScalarFieldEnum]
+
+
+export const BookCategoryScalarFieldEnum = {
+  bookId: 'bookId',
+  categoryId: 'categoryId',
+  assignedAt: 'assignedAt'
+} as const
+
+export type BookCategoryScalarFieldEnum = (typeof BookCategoryScalarFieldEnum)[keyof typeof BookCategoryScalarFieldEnum]
+
+
 export const BookTitleScalarFieldEnum = {
   id: 'id',
   title: 'title',
   author: 'author',
   synopsis: 'synopsis',
-  category: 'category',
   coverImage: 'coverImage',
   avgRating: 'avgRating'
 } as const

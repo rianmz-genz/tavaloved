@@ -19,11 +19,11 @@ export default function MasterBukuPage() {
 
     return (
         <div>
-            <h1 className="text-4xl font-bold text-foreground mb-1">📚 Master Buku</h1>
+            <h1 className="text-4xl font-medium text-foreground mb-1">📚 Master Buku</h1>
             <p className="text-muted-foreground mb-6">Kelola katalog judul dan stok fisik buku perpustakaan.</p>
 
             <div className="mb-8 flex justify-between items-center">
-                <h2 className="text-3xl font-bold text-foreground">Daftar Katalog</h2>
+                <h2 className="text-3xl font-medium text-foreground">Daftar Katalog</h2>
                 {/* Tombol Toggle Form */}
                 <Button 
                     onClick={() => setShowForm(prev => !prev)} 
