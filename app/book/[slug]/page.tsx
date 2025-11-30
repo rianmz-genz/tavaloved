@@ -40,7 +40,6 @@ async function fetchBookDetail(bookId: string): Promise<BookTitle | null> {
     }/api/books/${bookId}`,
     {
       // Cache data
-      next: { revalidate: 3600 },
       // Gunakan no-cache di development jika terjadi masalah caching
       // cache: 'no-store'
       cache: "no-store", // Mengabaikan cache

@@ -178,7 +178,7 @@ export default function Home() {
           {/* GANTI DENGAN LOGO */}
           <div className="flex justify-center items-center flex-col">
             <Image
-              src="/assets/img/tavaloved.png"
+              src="/assets/img/tavaloved.webp"
               alt="TAVALOVEd Library Logo"
               width={80}
               height={80}

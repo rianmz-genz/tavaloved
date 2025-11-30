@@ -64,7 +64,7 @@ function html({ url, host, email }: { url: string; host: string; email: string }
 // Menggunakan async/await agar bisa di-hook untuk logging (Lihat bagian 2)
 async function sendVerificationRequest({ identifier: email, url, provider, baseUrl, theme }: any) {
     const { host } = new URL(url);
-    
+    console.log(`Mengirim email verifikasi ke ${email} untuk host ${host} dengan URL: ${url}`);
     // PANGGIL FUNGSI KIRIM EMAIL DARI NODE MAILER DI SINI
     // Anda harus menggunakan service email yang sudah dikonfigurasi
     // Asumsi: Anda sudah punya 'sendEmail' helper yang menggunakan 'provider.server' dan 'provider.from'

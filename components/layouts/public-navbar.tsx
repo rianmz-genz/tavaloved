@@ -28,7 +28,7 @@ export default function PublicNavbar() {
                     {/* Logo/Judul Kiri */}
                     <Link href="/" className="flex items-center space-x-2 transition-opacity hover:opacity-80">
                         <Image
-                            src="/assets/img/tavaloved.png"
+                            src="/assets/img/tavaloved.webp"
                             alt="TAVALOVEd Library Logo"
                             width={32}
                             height={32}

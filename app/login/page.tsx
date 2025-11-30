@@ -8,9 +8,10 @@ import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/com
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { toast } from 'sonner'
 
 // Asumsikan path gambar sudah benar
-const LOGO_PATH = "/assets/img/tavaloved.png"
+const LOGO_PATH = "/assets/img/tavaloved.webp"
 
 
 export default function LoginPage() {
@@ -40,6 +41,7 @@ export default function LoginPage() {
         // Di NextAuth, result?.ok biasanya false saat email dikirim dan redirect: false
         // Tapi kita anggap sukses jika tidak ada error
         // Note: Sebenarnya, NextAuth sendiri sudah mengarahkan ke /verify-request secara internal saat sukses
+        toast.success("Link masuk telah dikirim ke email Anda. Cek inbox atau folder spam.")
       }
 
     } catch (err) {
@@ -48,7 +50,6 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false)
       // Feedback tambahan:
-      alert(`Magic Link terkirim ke ${email}. Cek inbox Anda.`)
     }
   }
 
@@ -109,7 +110,7 @@ export default function LoginPage() {
             </Button>
             
             <p className="text-center text-xs text-muted-foreground mt-2">
-              **Otomatis Daftar:** Jika email belum terdaftar, akun akan dibuat.
+            Otomatis daftar jika email belum terdaftar, akun akan dibuat.
             </p>
 
             {/* Tambahan Info */}
