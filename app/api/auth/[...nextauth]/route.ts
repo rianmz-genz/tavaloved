@@ -31,7 +31,7 @@ function html({ url, host, email }: { url: string; host: string; email: string }
     
     return `
         <div style="border: 1px solid ${brandColor}; padding: 20px; border-radius: 10px; font-family: sans-serif; max-width: 600px; margin: auto;">
-            <div style="text-align: center; margin-bottom: 20px;">
+            <div style="text-align: centeapr; margin-bottom: 20px;">
                 <h1 style="color: ${brandColor}; margin: 0;">TAVALOVEd LIBRARY</h1>
                 <p style="color: #555;">Verifikasi Email Anda</p>
             </div>

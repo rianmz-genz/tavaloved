@@ -10,7 +10,7 @@ export default function AdminDashboardPage() {
         👋 Selamat Datang, Admin!
       </h1>
       <p className="text-muted-foreground mb-6">
-        Ini adalah ringkasan aktivitas perpustakaan Anda.
+        Ini adalah ringkasan aktivitas Anda.
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

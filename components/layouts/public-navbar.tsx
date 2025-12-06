@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
-import { LogIn, LogOut, User, Menu } from 'lucide-react';
+import { LogIn, LogOut, User, Menu, LayoutDashboard } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -81,7 +81,13 @@ export default function PublicNavbar() {
                                     {/* Link ke Dashboard User (jika ada) */}
                                     <Link href="/dashboard" passHref>
                                         <DropdownMenuItem className="cursor-pointer">
-                                            <User className='w-4 h-4 mr-2' /> Dashboard Saya
+                                            <LayoutDashboard className='w-4 h-4 mr-2' /> Dashboard Saya
+                                        </DropdownMenuItem>
+                                    </Link>
+
+                                     <Link href="/dashboard/profile" passHref>
+                                        <DropdownMenuItem className="cursor-pointer">
+                                            <User className='w-4 h-4 mr-2' /> Profil Saya
                                         </DropdownMenuItem>
                                     </Link>
 

@@ -178,7 +178,7 @@ export default function UserProfilePage() {
           document.body.removeChild(link);
 
           toast.success("Download Selesai", {
-            description: "Kartu Perpustakaan berhasil diunduh.",
+            description: "Kartu Anggota berhasil diunduh.",
             id: "download-toast",
           });
         })
@@ -207,7 +207,7 @@ export default function UserProfilePage() {
       const printWindow = window.open("", "", "height=600,width=800");
       if (printWindow) {
         printWindow.document.write(
-          `<html><head><title>Kartu Perpustakaan</title>${stylesheets}</head><body>`
+          `<html><head><title>Kartu Anggota</title>${stylesheets}</head><body>`
         );
         printWindow.document.write(printContent.outerHTML);
         printWindow.document.write("</body></html>");
@@ -263,7 +263,7 @@ export default function UserProfilePage() {
         Pengaturan Profil
       </h1>
       <p className="text-muted-foreground mb-8">
-        Atur informasi pribadi Anda dan kelola Kartu Perpustakaan.
+        Atur informasi pribadi Anda dan kelola Kartu.
       </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -272,7 +272,7 @@ export default function UserProfilePage() {
           <Card className="shadow-2xl border-primary/50">
             <CardHeader className="flex flex-row justify-between items-center">
               <CardTitle className="text-xl text-primary">
-                Kartu Anggota Perpustakaan
+                Kartu Anggota
               </CardTitle>
               <div className="space-x-2">
                 <Button onClick={handlePrint} size="sm" variant="outline">
@@ -424,7 +424,7 @@ export default function UserProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="nomorHp">Nomor HP</Label>
+                <Label htmlFor="nomorHp">Nomor WA</Label>
                 <Input
                   id="nomorHp"
                   type="text"
