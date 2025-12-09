@@ -1,29 +1,20 @@
 # -- Stage 1: Install Dependencies --
 FROM node:20-alpine AS deps
 WORKDIR /app
-
 RUN apk add --no-cache libc6-compat
-
 COPY package.json package-lock.json ./
-# Copy prisma schema buat install deps
 COPY prisma ./prisma
-
-# Install dependencies saja
 RUN npm ci
 
 # -- Stage 2: Build App --
 FROM node:20-alpine AS builder
 WORKDIR /app
-
-# Copy node_modules dari stage deps
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# GENERATE PRISMA DISINI (Tepat sebelum build)
-# Ini memastikan client digenerate di environment yang benar dan file-nya fresh
-RUN DATABASE_URL="postgresql://johndoe:randompassword@localhost:5432/mydb?schema=public" npx prisma generate
+# Generate Client dengan dummy URL (wajib buat build)
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/mydb" npx prisma generate
 
-# Baru build
 RUN NEXT_TELEMETRY_DISABLED=1 npm run build
 
 # -- Stage 3: Runner (Production) --
@@ -36,17 +27,27 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Copy public
 COPY --from=builder /app/public ./public
 
-# Copy hasil build
+# Copy hasil build standalone
 COPY --from=builder --chown=node:node /app/.next/standalone ./
 COPY --from=builder --chown=node:node /app/.next/static ./.next/static
 
-# Optional: Copy prisma schema & migrations folder (penting kalau mau migrate di prod)
+# Copy prisma schema & migrations (WAJIB ADA buat migrate deploy)
 COPY --from=builder --chown=node:node /app/prisma ./prisma
 
+# --- BAGIAN BARU: SETUP START.SH ---
+
+# 1. Copy script start.sh ke dalam container
+COPY --chown=node:node start.sh ./start.sh
+
+# 2. Beri hak akses execute (biar bisa dijalankan)
+RUN chmod +x ./start.sh
+
+# Switch ke user non-root
 USER node
 
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+# Ganti CMD jadi jalanin script start.sh
+CMD ["./start.sh"]
