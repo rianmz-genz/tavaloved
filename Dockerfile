@@ -21,7 +21,7 @@ COPY . .
 
 # GENERATE PRISMA DISINI (Tepat sebelum build)
 # Ini memastikan client digenerate di environment yang benar dan file-nya fresh
-RUN npx prisma generate
+RUN DATABASE_URL="postgresql://johndoe:randompassword@localhost:5432/mydb?schema=public" npx prisma generate
 
 # Baru build
 RUN NEXT_TELEMETRY_DISABLED=1 npm run build
