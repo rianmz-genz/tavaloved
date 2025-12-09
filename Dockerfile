@@ -5,7 +5,7 @@ FROM node:20-alpine AS deps
 WORKDIR /app
 
 # Salin file package.json dan package-lock.json
-COPY package.json yarn.lock ./
+COPY package.json package-lock.json ./
 
 # Pasang dependency
 RUN npm install --frozen-lockfile
