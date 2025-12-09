@@ -1,30 +1,23 @@
 version: '3.8'
 
 services:
-  # ----------------------------------------------------
-  # 1. Database PostgreSQL Service
-  # ----------------------------------------------------
   db:
     image: postgres:15-alpine
     restart: always
     environment:
-      POSTGRES_USER: bookloan_user
-      POSTGRES_PASSWORD: bookloan_pass
-      POSTGRES_DB: bookloan_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5444:5432"
     volumes:
-      # Data database akan tersimpan permanen di volume 'postgres_data'
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U bookloan_user -d bookloan_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  # ----------------------------------------------------
-  # 2. Next.js Application Service
-  # ----------------------------------------------------
   app:
     build:
       context: .
@@ -33,31 +26,21 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # Variabel Lingkungan yang PENTING untuk Aplikasi
       NODE_ENV: production
-      # Ambil user/pass dari service 'db'
-      DATABASE_URL: "postgresql://bookloan_user:bookloan_pass@db:5432/bookloan_db"
-      NEXTAUTH_SECRET: "GANTI_DENGAN_SECRET_KEY_YANG_SANGAT_KUAT"
-      NEXTAUTH_URL: "http://localhost:3000"
-    volumes:
-      # Hindari volume node_modules untuk build yang bersih, tapi bisa digunakan untuk dev
-      - .:/app
-      - /app/node_modules
+      DATABASE_URL: ${DATABASE_URL}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
     depends_on:
-      # Pastikan database siap sebelum aplikasi mencoba terkoneksi
       db:
-        condition: service_healthy 
+        condition: service_healthy
 
-  # ----------------------------------------------------
-  # 3. Prisma Studio (Database UI) Service (Opsional tapi membantu)
-  # ----------------------------------------------------
   studio:
     image: ghcr.io/prisma/studio:latest
     restart: on-failure
     ports:
       - "5555:5555"
     environment:
-      DATABASE_URL: "postgresql://bookloan_user:bookloan_pass@db:5432/bookloan_db"
+      DATABASE_URL: ${DATABASE_URL}
     depends_on:
       db:
         condition: service_healthy

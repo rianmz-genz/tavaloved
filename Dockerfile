@@ -1,54 +1,58 @@
 # -- Stage 1: Dependency Installation --
 FROM node:20-alpine AS deps
 
-# Tentukan direktori kerja di dalam container
 WORKDIR /app
 
-# Salin file package.json dan package-lock.json
+# Install dependencies needed for alpine to run certain node modules (optional but recommended)
+RUN apk add --no-cache libc6-compat
+
 COPY package.json package-lock.json ./
+COPY prisma ./prisma
 
-# Pasang dependency
-RUN npm install --frozen-lockfile
+# Install dependencies and generate Prisma Client immediately
+RUN npm ci
+RUN npx prisma generate
 
-# -- Stage 2: Build Aplikasi Next.js --
+# -- Stage 2: Build Application --
 FROM node:20-alpine AS builder
 
 WORKDIR /app
+
+# Copy node_modules from deps (now contains Prisma Client)
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Konfigurasi variabel lingkungan selama proses build (jika ada)
-# ENV NEXT_PUBLIC_...
-
-# Jalankan proses build Next.js
-# NEXT_TELEMETRY_DISABLED=1 hanya untuk mematikan notifikasi telemetry saat build
-RUN NEXT_TELEMETRY_DISABLED=1 npx prisma generate
+# Build the Next.js application
 RUN NEXT_TELEMETRY_DISABLED=1 npm run build
 
-# -- Stage 3: Produksi (Running the Application) --
+# -- Stage 3: Production Runner --
 FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Salin hanya yang diperlukan dari tahap build
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/prisma ./prisma
-
-# User non-root (lebih aman)
-RUN addgroup -g 1001 nodejs
-RUN adduser -u 1001 appuser
-USER appuser
-
-# PENTING: Environment Variables saat Runtime
 ENV NODE_ENV=production
-# Pastikan NEXTAUTH_SECRET dan DATABASE_URL di set di docker-compose/runtime
-# ENV NEXTAUTH_SECRET="GANTI_SAYA" 
-# ENV DATABASE_URL="postgresql://bookloan_user:bookloan_pass@db:5432/bookloan_db"
+ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN addgroup -g 1001 nodejs
+RUN adduser -u 1001 nextjs
+
+# Copy necessary files only
+COPY --from=builder /app/public ./public
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Optional: Copy prisma schema if you need to run migrations at runtime
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+
+USER nextjs
 
 EXPOSE 3000
 
-# Perintah untuk menjalankan aplikasi
-CMD ["npm", "start"]
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Use node server.js for standalone output (Much lighter and faster)
+CMD ["node", "server.js"]
