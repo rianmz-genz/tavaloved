@@ -1,21 +1,27 @@
 services:
+  # ----------------------------------------------------
+  # 1. Database PostgreSQL Service
+  # ----------------------------------------------------
   db:
     image: postgres:15-alpine
     restart: always
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+    # PENTING: Langsung baca file .env, gak usah pake variable substitution ribet
+    env_file:
+      - .env
     ports:
       - "5444:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      # Disini kita hardcode nama user & db sesuai .env kamu biar gak error parsing
+      test: ["CMD-SHELL", "pg_isready -U bookloan_user -d bookloan_db"]
       interval: 5s
       timeout: 5s
       retries: 5
 
+  # ----------------------------------------------------
+  # 2. Next.js Application Service
+  # ----------------------------------------------------
   app:
     build:
       context: .
@@ -23,11 +29,9 @@ services:
     restart: always
     ports:
       - "3000:3000"
-    environment:
-      NODE_ENV: production
-      DATABASE_URL: ${DATABASE_URL}
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-      NEXTAUTH_URL: ${NEXTAUTH_URL}
+    # PENTING: App juga baca langsung dari .env
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy
