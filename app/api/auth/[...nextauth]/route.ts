@@ -4,7 +4,6 @@ import NextAuth, { NextAuthOptions, type DefaultSession } from "next-auth" // Ta
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import prisma from "@/lib/prisma"
 import EmailProvider from "next-auth/providers/email"
-import { PrismaClient } from "@prisma/client";
 
 // -------------------------------------------------------------
 // Tambahkan deklarasi module untuk memperluas tipe Session dan JWT
@@ -80,7 +79,7 @@ async function sendVerificationRequest({ identifier: email, url, provider, baseU
     });
 }
 export const authOptions: NextAuthOptions = {
-    adapter: PrismaAdapter(prisma as unknown as PrismaClient),
+    adapter: PrismaAdapter(prisma as any),
 
     providers: [
         EmailProvider({
