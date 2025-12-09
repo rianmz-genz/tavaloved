@@ -1,7 +1,6 @@
 // file: components/layouts/admin-layout.tsx
 
 "use client";
-import { SessionProvider } from "next-auth/react";
 import AdminSidebar from "./admin-sidebar"; // Import sidebar
 import { ScrollArea } from "@/components/ui/scroll-area"; // Asumsikan kamu punya ScrollArea
 import { Fragment } from "react/jsx-runtime";

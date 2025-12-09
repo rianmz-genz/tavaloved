@@ -80,15 +80,30 @@ export default function UserProfilePage() {
 
   // --- Handler File Change (TETAP SAMA) ---
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Hapus URL blob lama untuk menghindari kebocoran memori (penting!)
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       setNewImageFile(file);
+      // Membuat URL blob baru
       setImagePreview(URL.createObjectURL(file));
     } else {
       setNewImageFile(null);
       setImagePreview(null);
     }
   };
+  
+  // Tambahkan cleanup saat komponen di-unmount
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   // --- Handler Update Profile (TETAP SAMA) ---
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -127,6 +142,10 @@ export default function UserProfilePage() {
       setUserData(result.user);
       setCacheKey(Date.now());
       setNewImageFile(null);
+      // Hapus URL blob setelah upload berhasil
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
       setImagePreview(null);
 
       const fileInput = document.getElementById(
@@ -251,12 +270,20 @@ export default function UserProfilePage() {
     );
   }
 
-  // URL untuk render gambar (dengan anti-cache key)
-  const avatarUrl = imagePreview || userData!.image;
-  const finalAvatarSrc = avatarUrl ? `${avatarUrl}?t=${cacheKey}` : null;
+  // URL untuk gambar yang sudah tersimpan (tanpa preview)
+  const savedAvatarUrl = userData!.image;
+  // Tambahkan anti-cache key HANYA pada gambar yang tersimpan.
+  const finalSavedAvatarSrc = savedAvatarUrl
+    ? `${savedAvatarUrl}?t=${cacheKey}`
+    : null;
+    
+  // URL yang akan ditampilkan (prioritas: Preview > Gambar Tersimpan)
+  const displayAvatarSrc = imagePreview || finalSavedAvatarSrc;
+
   const publicUrl = `${
     process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
   }/user/${userData!.id}`;
+  
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <h1 className="text-4xl font-semibold text-foreground mb-1">
@@ -359,19 +386,32 @@ export default function UserProfilePage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleUpdateProfile} className="space-y-4">
-              {/* --- INPUT IMAGE --- */}
+              {/* --- INPUT IMAGE (Perubahan di Sini) --- */}
               <div className="flex flex-col items-center space-y-3 pb-2">
                 <div className="relative w-24 h-24 rounded-full bg-secondary border-2 border-primary/50 shadow-inner overflow-hidden">
-                  {finalAvatarSrc ? (
-                    <Image
-                      src={finalAvatarSrc}
-                      alt="User Avatar"
-                      layout="fill"
-                      objectFit="cover"
-                      className="z-0"
-                      unoptimized
-                    />
+                  {/* Logika Display Avatar yang Sudah Dipisahkan */}
+                  {displayAvatarSrc ? (
+                    // Cek apakah ini URL blob (Preview) atau URL biasa (Gambar Tersimpan)
+                    imagePreview ? (
+                      // Jika ada imagePreview (blob:), pakai tag <img> biasa
+                      <img
+                        src={imagePreview}
+                        alt="User Avatar Preview"
+                        className="w-full h-full object-cover z-0"
+                      />
+                    ) : (
+                      // Jika tidak ada imagePreview, pakai Next.js Image Component
+                      <Image
+                        src={finalSavedAvatarSrc!} // finalSavedAvatarSrc pasti ada di sini
+                        alt="User Avatar Saved"
+                        fill
+                        style={{ objectFit: 'cover' }} // Pindahkan objectFit ke style
+                        className="z-0"
+                        unoptimized
+                      />
+                    )
                   ) : (
+                    // Avatar default jika tidak ada gambar
                     <div className="w-full h-full flex items-center justify-center text-primary">
                       <User className="w-10 h-10" />
                     </div>
@@ -404,6 +444,7 @@ export default function UserProfilePage() {
                   id="name"
                   type="text"
                   required
+                  placeholder="ex: John Doe"
                   value={userData!.name || ""}
                   onChange={(e) =>
                     setUserData((prev) =>
@@ -428,6 +469,7 @@ export default function UserProfilePage() {
                 <Input
                   id="nomorHp"
                   type="text"
+                  pattern="^\+62[0-9]{9,13}$"
                   required
                   value={userData!.nomorHp || ""}
                   onChange={(e) =>
@@ -435,7 +477,7 @@ export default function UserProfilePage() {
                       prev ? { ...prev, nomorHp: e.target.value } : null
                     )
                   }
-                  placeholder="cth: 081234567890"
+                  placeholder="ex: +6281234567890"
                 />
               </div>
 

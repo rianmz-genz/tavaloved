@@ -49,7 +49,7 @@ export default function PublicNavbar() {
                             // --- USER DROPDOWN ---
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="flex items-center space-x-2 pr-1">
+                                    <Button variant="ghost" size="sm" className="flex items-center space-x-2">
                                         <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center border border-primary/50 text-primary">
                                             {/* Inisial User atau Ikon Default */}
                                             {session.user.name ? session.user.name[0] : <User className='w-5 h-5' />}
