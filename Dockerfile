@@ -1,53 +1,61 @@
-# -- Stage 1: Install Dependencies --
-FROM node:20-alpine AS deps
+# =====================
+# Build stage (Base)
+# =====================
+FROM node:22-alpine AS builder
+
 WORKDIR /app
-RUN apk add --no-cache libc6-compat
+
 COPY package.json package-lock.json ./
-COPY prisma ./prisma
+# Install semua dependencies (termasuk devDependencies kayak prisma cli)
 RUN npm ci
 
-# -- Stage 2: Build App --
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Client dengan dummy URL (wajib buat build)
-RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/mydb" npx prisma generate
+# Build Next.js
+ENV NODE_ENV=production
+RUN npm run build
 
-RUN NEXT_TELEMETRY_DISABLED=1 npm run build
+# =====================
+# Runtime Stage: NEXTJS
+# =====================
+FROM node:22-alpine AS runner
 
-# -- Stage 3: Runner (Production) --
-FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy public
+COPY --from=builder /app/package.json /app/package-lock.json /app/prisma.config.ts ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-
-# Copy hasil build standalone
-COPY --from=builder --chown=node:node /app/.next/standalone ./
-COPY --from=builder --chown=node:node /app/.next/static ./.next/static
-
-# Copy prisma schema & migrations (WAJIB ADA buat migrate deploy)
-COPY --from=builder --chown=node:node /app/prisma ./prisma
-
-# --- BAGIAN BARU: SETUP START.SH ---
-
-# 1. Copy script start.sh ke dalam container
-COPY --chown=node:node start.sh ./start.sh
-
-# 2. Beri hak akses execute (biar bisa dijalankan)
-RUN chmod +x ./start.sh
-
-# Switch ke user non-root
-USER node
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/generated ./generated
 
 EXPOSE 3000
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
 
-# Ganti CMD jadi jalanin script start.sh
-CMD ["./start.sh"]
+CMD ["sh", "-c", "npm run db:deploy && npm run start"]
+
+
+# =====================
+# Runtime Stage: STUDIO (Baru!)
+# =====================
+FROM node:22-alpine AS studio
+
+WORKDIR /app
+
+# Kita copy node_modules dari builder (yang isinya lengkap)
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/package-lock.json ./package-lock.json
+
+# Copy file Prisma & Config yang dibutuhkan
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./
+COPY --from=builder /app/generated ./generated
+
+
+EXPOSE 5555
+
+# Jalankan Prisma Studio
+# Hostname 0.0.0.0 wajib biar bisa diakses dari luar container
+CMD ["npx", "prisma", "studio", "--port", "5555", "--browser", "none"]

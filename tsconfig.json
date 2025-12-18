@@ -30,6 +30,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "prisma/seed.js"  ],
+, "prisma/seed.ts"  ],
   "exclude": ["node_modules"]
 }
