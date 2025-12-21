@@ -22,7 +22,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runner  # (Opsional) Explicitly bilang ini pake stage 'runner'
-    container_name: nextjs_app
+    container_name: tavaloved
     restart: always
     ports:
       - "3000:3000"
